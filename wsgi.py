@@ -10,6 +10,7 @@ from App.models.shift import Shift
 from App.models.timeentry import TimeEntry
 from datetime import datetime
 
+
 app = create_app()
 migrate = get_migrate(app)
 
@@ -112,3 +113,5 @@ def init():
         db.session.add_all([admin, staff1])
         db.session.commit()
     print("Database initialized with default users")
+
+
