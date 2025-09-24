@@ -5,8 +5,8 @@ class TimeEntry(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     shift_id = db.Column(db.Integer, db.ForeignKey("shifts.id"), nullable=False)
-    time_in = db.Column(db.Time(20), nullable=True)
-    time_out = db.Column(db.Time(20), nullable=True)
+    time_in = db.Column(db.Time, nullable=True)
+    time_out = db.Column(db.Time, nullable=True)
 
     def __repr__(self):
         return f"<TimeEntry Shift={self.shift_id} In={self.time_in} Out={self.time_out}>"

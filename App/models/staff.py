@@ -22,7 +22,7 @@ class Staff(db.Model):
     
     def get_json(self):
         return {
-            'userId': self.userId,
+            'userId': self.user_id,
             'username': self.username,
             'role': self.role
         }       
