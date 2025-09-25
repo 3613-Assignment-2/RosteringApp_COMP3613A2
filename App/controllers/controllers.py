@@ -3,6 +3,8 @@ from App.models.shift import Shift
 from App.models.timeentry import TimeEntry
 from App.database import db
 from datetime import datetime
+from flask_login import current_user
+from flask import abort 
 
 # -------- LOGIN --------
 def login(username, password):
@@ -26,17 +28,22 @@ def schedule_shift(admin_user, staff_user, date_str, start_str, end_str):
     return shift
 
 # -------- VIEW ROSTER (STAFF) --------
-def view_roster():
+def view_roster(user):
+    if user.role != "Staff":
+        raise PermissionError("Access denied: Staff only.")
+    
     shifts = Shift.query.all()
     roster = []
     for s in shifts:
         roster.append({
+            'shift_id': s.shift_id,
             'staff': s.staff.username,
             'date': s.date,
             'start': s.start_time,
             'end': s.end_time
         })
     return roster
+
 
 # -------- TIME IN / TIME OUT (STAFF) --------
 def time_in(staff_user, shift_id):

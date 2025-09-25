@@ -29,11 +29,21 @@ def login_command(username, password):
     else:
         print("Login failed")
 
-@rostering_cli.command("view_roster", help="View all shifts")
-def view_roster_command():
-    roster = view_roster()
-    for r in roster:
-        print(f"Staff: {r['staff']}, Date: {r['date']}, Start: {r['start']}, End: {r['end']}")
+@rostering_cli.command("view_roster", help="View all shifts (Staff only)")
+@click.argument("staff_username")
+def view_roster_command(staff_username):
+    staff_user = Staff.query.filter_by(username=staff_username).first()
+    if not staff_user:
+        print("Staff not found")
+        return
+    try:
+        roster = view_roster(staff_user)
+        print("Roster:")
+        for r in roster:
+            print(f"Shift ID: {r['shift_id']}, Staff: {r['staff']}, Date: {r['date']}, Start: {r['start']}, End: {r['end']}")
+    except Exception as e:
+        print(f"Error: {e}")
+
 
 @rostering_cli.command("schedule", help="Schedule a shift (Admin only)")
 @click.argument("admin_username")
@@ -113,5 +123,18 @@ def init():
         db.session.add_all([admin, staff1])
         db.session.commit()
     print("Database initialized with default users")
+
+@rostering_cli.command("add_staff", help="Add a new staff user")
+@click.argument("username")
+@click.argument("password")
+def add_staff_command(username, password):
+    if Staff.query.filter_by(username=username).first():
+        print("Staff user already exists.")
+        return
+    staff = Staff(username=username, password=password, role="Staff")
+    db.session.add(staff)
+    db.session.commit()
+    print(f"Staff {username} added successfully.")
+
 
 

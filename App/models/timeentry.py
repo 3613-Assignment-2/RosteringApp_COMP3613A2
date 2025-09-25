@@ -4,7 +4,7 @@ class TimeEntry(db.Model):
     __tablename__ = "time_entries"
 
     id = db.Column(db.Integer, primary_key=True)
-    shift_id = db.Column(db.Integer, db.ForeignKey("shifts.id"), nullable=False)
+    shift_id = db.Column(db.Integer, db.ForeignKey("shifts.shift_id"), nullable=False)
     time_in = db.Column(db.Time, nullable=True)
     time_out = db.Column(db.Time, nullable=True)
 
