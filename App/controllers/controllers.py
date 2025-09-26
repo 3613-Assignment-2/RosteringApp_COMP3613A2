@@ -2,7 +2,7 @@ from App.models.staff import Staff
 from App.models.shift import Shift
 from App.models.timeentry import TimeEntry
 from App.database import db
-from datetime import datetime
+from datetime import date, datetime, timedelta
 
 def login(username, password):
     """Return the Staff object if username/password are valid."""
@@ -16,7 +16,16 @@ def schedule_shift(admin, staff, date_str, start_str, end_str):
         print("Only Admins can schedule shifts.")
         return None
     
+    
     date = datetime.strptime(date_str, "%d-%m-%Y").date()
+    today = date.today()
+    start_of_week = today - timedelta(days=today.weekday()) 
+    end_of_week = start_of_week + timedelta(days=6)         
+
+    if not (start_of_week <= date <= end_of_week):
+        print("Shifts can only be scheduled within the current week.")
+        return
+
     start_time = datetime.strptime(start_str, "%H:%M").time()
     end_time = datetime.strptime(end_str, "%H:%M").time()
     
@@ -73,18 +82,28 @@ def view_shift_report(admin):
         print("Only Admins can view reports.")
         return []
     
-    shifts = Shift.query.all()
+    today = datetime.now().date()
+    start_of_week = today - timedelta(days=today.weekday())
+    end_of_week = start_of_week + timedelta(days=6)
+    
+    shifts = Shift.query.filter(Shift.date.between(start_of_week, end_of_week)).all()
     report = []
     for s in shifts:
-        entries = TimeEntry.query.filter_by(shift_id=s.shift_id).all()
+        entry = TimeEntry.query.filter_by(shift_id=s.shift_id).order_by(TimeEntry.id.desc()).first()
+        if entry:
+            time_entry = {'in': entry.time_in, 'out': entry.time_out}
+        else:
+            time_entry = {'in': None, 'out': None}
+
         report.append({
             'staff': s.staff.username,
             'date': s.date,
             'start': s.start_time,
             'end': s.end_time,
-            'time_entries': [{'in': e.time_in, 'out': e.time_out} for e in entries]
+            'time_entry': time_entry
         })
     return report
+
 
  
 def change_password(username, old_password, new_password):

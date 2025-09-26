@@ -1,3 +1,17 @@
+#CLI Commands
+Admin commands:
+flask rostering schedule <admin_username> <admin_password> <staff_username> <date> <start_time> <end_time>
+flask rostering view_report <admin_username> <admin_password>
+flask rostering add_staff <admin_username> <admin_password> <username> <password>
+
+Staff commands:
+flask rostering view_roster <staff_username> <staff_password>
+flask rostering time_in <staff_username> <staff_password> <shift_id>
+flask rostering time_out <staff_username> <staff_password> <shift_id>
+flask rostering change_password <username> <old_password> <new_password>
+
+
+
 ![Tests](https://github.com/uwidcit/flaskmvc/actions/workflows/dev.yml/badge.svg)
 
 # Flask MVC Template

@@ -100,12 +100,13 @@ def view_report_command(admin_username, admin_password):
 
     report = view_shift_report(admin)
     if not report:
+        print("No shifts found.")
         return
 
     for r in report:
         print(f"Staff: {r['staff']}, Date: {r['date']}, Start: {r['start']}, End: {r['end']}")
-        for e in r['time_entries']:
-            print(f"Time In: {e['in']}, Time Out: {e['out']}")
+        e = r['time_entry']
+        print(f"Time In: {e['in']}, Time Out: {e['out']}")
 
 @rostering_cli.command("add_staff")
 @click.argument("admin_username")
