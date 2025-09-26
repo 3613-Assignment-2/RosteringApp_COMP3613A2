@@ -8,18 +8,13 @@ from App.controllers.controllers import (
 from App.models.staff import Staff
 from App.models.shift import Shift
 from App.models.timeentry import TimeEntry
-from datetime import datetime
-
 
 app = create_app()
 migrate = get_migrate(app)
+rostering_cli = AppGroup('rostering')
 
-# -------------------------
-# Rostering CLI Commands
-# -------------------------
-rostering_cli = AppGroup('rostering', help='Rostering commands')
-
-@rostering_cli.command("login", help="Login as a user")
+"""
+@rostering_cli.command("login")
 @click.argument("username")
 @click.argument("password")
 def login_command(username, password):
@@ -28,95 +23,124 @@ def login_command(username, password):
         print(f"Logged in as {user.username} ({user.role})")
     else:
         print("Login failed")
+"""
 
-@rostering_cli.command("view_roster", help="View all shifts (Staff only)")
-@click.argument("staff_username")
-def view_roster_command(staff_username):
-    staff_user = Staff.query.filter_by(username=staff_username).first()
-    if not staff_user:
-        print("Staff not found")
+@rostering_cli.command("view_roster")
+@click.argument("username")
+@click.argument("password")
+def view_roster_command(username, password):
+    user = login(username, password)
+    if not user:
+        print("Invalid username or password.")
         return
-    try:
-        roster = view_roster(staff_user)
-        print("Roster:")
-        for r in roster:
-            print(f"Shift ID: {r['shift_id']}, Staff: {r['staff']}, Date: {r['date']}, Start: {r['start']}, End: {r['end']}")
-    except Exception as e:
-        print(f"Error: {e}")
 
+    roster = view_roster(user)
+    if not roster:
+        return
 
-@rostering_cli.command("schedule", help="Schedule a shift (Admin only)")
+    print("Roster:")
+    for r in roster:
+        print(f"Shift ID: {r['shift_id']}, Staff: {r['staff']}, Date: {r['date']}, Start: {r['start']}, End: {r['end']}")
+
+@rostering_cli.command("schedule")
 @click.argument("admin_username")
+@click.argument("admin_password")
 @click.argument("staff_username")
 @click.argument("date")
 @click.argument("start_time")
 @click.argument("end_time")
-def schedule_shift_command(admin_username, staff_username, date, start_time, end_time):
-    admin = Staff.query.filter_by(username=admin_username).first()
-    staff_user = Staff.query.filter_by(username=staff_username).first()
-    if not admin or not staff_user:
-        print("Admin or staff user not found")
+def schedule_shift_command(admin_username, admin_password, staff_username, date, start_time, end_time):
+    admin = login(admin_username, admin_password)
+    staff = Staff.query.filter_by(username=staff_username).first()
+    if not admin or not staff:
+        print("Admin login failed or staff not found.")
         return
-    try:
-        shift = schedule_shift(admin, staff_user, date, start_time, end_time)
-        print(f"Shift scheduled: Staff={staff_user.username}, Date={shift.date}, Start={shift.start_time}, End={shift.end_time}")
-    except Exception as e:
-        print(f"Error: {e}")
 
-@rostering_cli.command("time_in", help="Record time in for a shift (Staff only)")
-@click.argument("staff_username")
+    shift = schedule_shift(admin, staff, date, start_time, end_time)
+    if shift:
+        print(f"Shift scheduled: Staff={staff.username}, Date={shift.date}, Start={shift.start_time}, End={shift.end_time}")
+
+
+@rostering_cli.command("time_in")
+@click.argument("username")
+@click.argument("password")
 @click.argument("shift_id", type=int)
-def time_in_command(staff_username, shift_id):
-    staff_user = Staff.query.filter_by(username=staff_username).first()
-    if not staff_user:
-        print("Staff not found")
+def time_in_command(username, password, shift_id):
+    user = login(username, password)
+    if not user:
+        print("Invalid username or password.")
         return
-    try:
-        entry = time_in(staff_user, shift_id)
+
+    entry = time_in(user, shift_id)
+    if entry:
         print(f"Time in recorded: {entry.time_in}")
-    except Exception as e:
-        print(f"Error: {e}")
 
-@rostering_cli.command("time_out", help="Record time out for a shift (Staff only)")
-@click.argument("staff_username")
+@rostering_cli.command("time_out")
+@click.argument("username")
+@click.argument("password")
 @click.argument("shift_id", type=int)
-def time_out_command(staff_username, shift_id):
-    staff_user = Staff.query.filter_by(username=staff_username).first()
-    if not staff_user:
-        print("Staff not found")
+def time_out_command(username, password, shift_id):
+    user = login(username, password)
+    if not user:
+        print("Invalid username or password.")
         return
-    try:
-        entry = time_out(staff_user, shift_id)
+
+    entry = time_out(user, shift_id)
+    if entry:
         print(f"Time out recorded: {entry.time_out}")
-    except Exception as e:
-        print(f"Error: {e}")
 
-@rostering_cli.command("view_report", help="View shift report (Admin only)")
+@rostering_cli.command("view_report")
 @click.argument("admin_username")
-def view_report_command(admin_username):
-    admin = Staff.query.filter_by(username=admin_username).first()
+@click.argument("admin_password")
+def view_report_command(admin_username, admin_password):
+    admin = login(admin_username, admin_password)
     if not admin:
-        print("Admin not found")
+        print("Invalid username or password.")
         return
-    try:
-        report = view_shift_report(admin)
-        for r in report:
-            print(f"Staff: {r['staff']}, Date: {r['date']}, Start: {r['start']}, End: {r['end']}")
-            for e in r['time_entries']:
-                print(f"    Time In: {e['in']}, Time Out: {e['out']}")
-    except Exception as e:
-        print(f"Error: {e}")
 
-# Add rostering CLI to the app
+    report = view_shift_report(admin)
+    if not report:
+        return
+
+    for r in report:
+        print(f"Staff: {r['staff']}, Date: {r['date']}, Start: {r['start']}, End: {r['end']}")
+        for e in r['time_entries']:
+            print(f"Time In: {e['in']}, Time Out: {e['out']}")
+
+@rostering_cli.command("add_staff")
+@click.argument("admin_username")
+@click.argument("admin_password")
+@click.argument("new_username")
+@click.argument("new_password")
+def add_staff_command(admin_username, admin_password, new_username, new_password):
+    admin = login(admin_username, admin_password)
+    if not admin or admin.role != "Admin":
+        print("Only Admins can add staff.")
+        return
+
+    if Staff.query.filter_by(username=new_username).first():
+        print("User already exists.")
+        return
+
+    staff = Staff(username=new_username, password=new_password, role="Staff")
+    db.session.add(staff)
+    db.session.commit()
+    print(f"User {new_username} added successfully.")
+
+@rostering_cli.command("change_password")
+@click.argument("username")
+@click.argument("old_password")
+@click.argument("new_password")
+def change_password_command(username, old_password, new_password):
+    from App.controllers.controllers import change_password
+    change_password(username, old_password, new_password)
+
+
 app.cli.add_command(rostering_cli)
 
-# -------------------------
-# Database Initialization CLI
-# -------------------------
-@app.cli.command("init", help="Creates and initializes the database")
+@app.cli.command("init")
 def init():
     db.create_all()
-    # Optionally, add some default users
     if not Staff.query.first():
         admin = Staff(username="admin1", password="adminpass", role="Admin")
         staff1 = Staff(username="staff1", password="staffpass", role="Staff")
@@ -124,17 +148,150 @@ def init():
         db.session.commit()
     print("Database initialized with default users")
 
-@rostering_cli.command("add_staff", help="Add a new staff user")
-@click.argument("username")
-@click.argument("password")
-def add_staff_command(username, password):
-    if Staff.query.filter_by(username=username).first():
-        print("Staff user already exists.")
-        return
-    staff = Staff(username=username, password=password, role="Staff")
-    db.session.add(staff)
-    db.session.commit()
-    print(f"Staff {username} added successfully.")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

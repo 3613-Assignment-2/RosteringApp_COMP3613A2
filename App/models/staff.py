@@ -9,9 +9,6 @@ class Staff(db.Model):
     password = db.Column(db.String(100), nullable=False)
     role = db.Column(db.String(10), nullable=False) 
 
-    def __repr__(self):
-        return f"<Staff {self.username} ({self.role})>"
-
     def set_password(self, password):
         """Create hashed password."""
         self.password = generate_password_hash(password)    
@@ -20,12 +17,6 @@ class Staff(db.Model):
         """Check hashed password."""
         return check_password_hash(self.password, password) 
     
-    def get_json(self):
-        return {
-            'userId': self.user_id,
-            'username': self.username,
-            'role': self.role
-        }       
     
     def __init__(self, username, password, role):
         self.username = username

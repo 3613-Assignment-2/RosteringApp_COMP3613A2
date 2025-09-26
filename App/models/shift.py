@@ -12,9 +12,6 @@ class Shift(db.Model):
     staff = db.relationship("Staff", backref=db.backref("shifts", lazy=True))
     time_entries = db.relationship("TimeEntry", backref="shift", lazy=True)
 
-    def __repr__(self):
-        return f"<Shift Staff={self.staff_id} {self.date} {self.start_time}-{self.end_time}>"
-    
     def get_json(self):
         return {
             'shiftId': self.shift_id,
@@ -29,11 +26,3 @@ class Shift(db.Model):
         self.date = date
         self.start_time = start_time
         self.end_time = end_time
-    
-    def update(self, date=None, start_time=None, end_time=None):
-        if date:
-            self.date = date
-        if start_time:
-            self.start_time = start_time
-        if end_time:
-            self.end_time = end_time
