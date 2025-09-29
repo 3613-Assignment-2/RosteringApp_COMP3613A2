@@ -11,6 +11,10 @@ flask rostering time_out <staff_username> <staff_password> <shift_id>
 flask rostering change_password <username> <old_password> <new_password>
 
 
+staff2 password:password
+staff3 password:password
+
+
 
 ![Tests](https://github.com/uwidcit/flaskmvc/actions/workflows/dev.yml/badge.svg)
 

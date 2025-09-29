@@ -8,6 +8,7 @@ from App.controllers.controllers import (
 from App.models.staff import Staff
 from App.models.shift import Shift
 from App.models.timeentry import TimeEntry
+from App.controllers.controllers import change_password
 
 app = create_app()
 migrate = get_migrate(app)
@@ -98,7 +99,7 @@ def view_report_command(admin_username, admin_password):
         print("Invalid username or password.")
         return
 
-    report = view_shift_report(admin)
+    report=view_shift_report(admin)
     if not report:
         print("No shifts found.")
         return
@@ -133,8 +134,7 @@ def add_staff_command(admin_username, admin_password, new_username, new_password
 @click.argument("old_password")
 @click.argument("new_password")
 def change_password_command(username, old_password, new_password):
-    from App.controllers.controllers import change_password
-    change_password(username, old_password, new_password)
+    change_password(username,old_password,new_password)
 
 
 app.cli.add_command(rostering_cli)
@@ -143,8 +143,8 @@ app.cli.add_command(rostering_cli)
 def init():
     db.create_all()
     if not Staff.query.first():
-        admin = Staff(username="admin1", password="adminpass", role="Admin")
-        staff1 = Staff(username="staff1", password="staffpass", role="Staff")
+        admin=Staff(username="admin1",password="adminpass",role="Admin")
+        staff1=Staff(username="staff1",password="staffpass",role="Staff")
         db.session.add_all([admin, staff1])
         db.session.commit()
     print("Database initialized with default users")
