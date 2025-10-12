@@ -46,8 +46,8 @@ def view_roster(user):
             'shift_id': s.shift_id,
             'staff': s.staff.username,
             'date': s.date,
-            'start': s.start_time,
-            'end': s.end_time
+            'start': s.start_time.strftime("%H:%M:%S"),
+            'end': s.end_time.strftime("%H:%M:%S")
         })
     return roster
 
@@ -81,28 +81,32 @@ def view_shift_report(admin):
     if admin.role != "Admin":
         print("Only Admins can view reports.")
         return []
-    
+
     today = datetime.now().date()
     start_of_week = today - timedelta(days=today.weekday())
     end_of_week = start_of_week + timedelta(days=6)
-    
+
     shifts = Shift.query.filter(Shift.date.between(start_of_week, end_of_week)).all()
     report = []
     for s in shifts:
         entry = TimeEntry.query.filter_by(shift_id=s.shift_id).order_by(TimeEntry.id.desc()).first()
         if entry:
-            time_entry = {'in': entry.time_in, 'out': entry.time_out}
+            time_entry = {
+                'in': entry.time_in.strftime("%H:%M:%S") if entry.time_in else None,
+                'out': entry.time_out.strftime("%H:%M:%S") if entry.time_out else None
+            }
         else:
             time_entry = {'in': None, 'out': None}
 
         report.append({
             'staff': s.staff.username,
-            'date': s.date,
-            'start': s.start_time,
-            'end': s.end_time,
+            'date': s.date.strftime("%Y-%m-%d"),
+            'start': s.start_time.strftime("%H:%M:%S"),
+            'end': s.end_time.strftime("%H:%M:%S"),
             'time_entry': time_entry
         })
     return report
+
 
 
  

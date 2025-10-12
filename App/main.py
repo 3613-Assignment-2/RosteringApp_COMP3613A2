@@ -15,12 +15,10 @@ from App.controllers import (
 )
 
 from App.views import views, setup_admin
-
-
+from App.views.views import views
 
 def add_views(app):
-    for view in views:
-        app.register_blueprint(view)
+    app.register_blueprint(views, url_prefix='/api')
 
 def create_app(overrides={}):
     app = Flask(__name__, static_url_path='/static')
@@ -31,11 +29,6 @@ def create_app(overrides={}):
     configure_uploads(app, photos)
     add_views(app)
     init_db(app)
-    jwt = setup_jwt(app)
     setup_admin(app)
-    @jwt.invalid_token_loader
-    @jwt.unauthorized_loader
-    def custom_unauthorized_response(error):
-        return render_template('401.html', error=error), 401
-    app.app_context().push()
     return app
+
