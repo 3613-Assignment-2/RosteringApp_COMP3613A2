@@ -22,7 +22,7 @@ def schedule_shift(admin, staff, date_str, start_str, end_str):
     start_of_week = today - timedelta(days=today.weekday()) 
     end_of_week = start_of_week + timedelta(days=6)         
 
-    if not (start_of_week <= date <= end_of_week):
+    if not (start_of_week <= date <= end_of_week): 
         print("Shifts can only be scheduled within the current week.")
         return
 
