@@ -3,7 +3,7 @@ from flask.cli import AppGroup
 from App.main import create_app
 from App.database import db, get_migrate
 from App.controllers.controllers import (
-    login, schedule_shift, view_roster, time_in, time_out, view_shift_report
+    authenticate, schedule_shift, view_roster, time_in, time_out, view_shift_report
 )
 from App.models.staff import Staff
 from App.models.shift import Shift
@@ -30,7 +30,7 @@ def login_command(username, password):
 @click.argument("username")
 @click.argument("password")
 def view_roster_command(username, password):
-    user = login(username, password)
+    user = authenticate(username, password)
     if not user:
         print("Invalid username or password.")
         return
@@ -51,7 +51,7 @@ def view_roster_command(username, password):
 @click.argument("start_time")
 @click.argument("end_time")
 def schedule_shift_command(admin_username, admin_password, staff_username, date, start_time, end_time):
-    admin = login(admin_username, admin_password)
+    admin = authenticate(admin_username, admin_password)
     staff = Staff.query.filter_by(username=staff_username).first()
     if not admin or not staff:
         print("Admin login failed or staff not found.")
@@ -67,7 +67,7 @@ def schedule_shift_command(admin_username, admin_password, staff_username, date,
 @click.argument("password")
 @click.argument("shift_id", type=int)
 def time_in_command(username, password, shift_id):
-    user = login(username, password)
+    user = authenticate(username, password)
     if not user:
         print("Invalid username or password.")
         return
@@ -81,7 +81,7 @@ def time_in_command(username, password, shift_id):
 @click.argument("password")
 @click.argument("shift_id", type=int)
 def time_out_command(username, password, shift_id):
-    user = login(username, password)
+    user = authenticate(username, password)
     if not user:
         print("Invalid username or password.")
         return
@@ -94,7 +94,7 @@ def time_out_command(username, password, shift_id):
 @click.argument("admin_username")
 @click.argument("admin_password")
 def view_report_command(admin_username, admin_password):
-    admin = login(admin_username, admin_password)
+    admin = authenticate(admin_username, admin_password)
     if not admin:
         print("Invalid username or password.")
         return
@@ -115,7 +115,7 @@ def view_report_command(admin_username, admin_password):
 @click.argument("new_username")
 @click.argument("new_password")
 def add_staff_command(admin_username, admin_password, new_username, new_password):
-    admin = login(admin_username, admin_password)
+    admin = authenticate(admin_username, admin_password)
     if not admin or admin.role != "Admin":
         print("Only Admins can add staff.")
         return

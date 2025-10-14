@@ -7,6 +7,7 @@ from werkzeug.datastructures import  FileStorage
 
 from App.database import init_db
 from App.config import load_config
+from flask_jwt_extended import JWTManager
 
 
 from App.controllers import (
@@ -20,6 +21,11 @@ from App.views.views import views
 def add_views(app):
     app.register_blueprint(views, url_prefix='/api')
 
+def setup_jwt(app):
+    app.config["JWT_SECRET_KEY"] = "your_secret_key_here"
+    jwt = JWTManager(app)
+    return jwt
+
 def create_app(overrides={}):
     app = Flask(__name__, static_url_path='/static')
     load_config(app, overrides)
@@ -30,5 +36,8 @@ def create_app(overrides={}):
     add_views(app)
     init_db(app)
     setup_admin(app)
+    setup_jwt(app)
     return app
+
+
 

@@ -4,8 +4,7 @@ from App.models.timeentry import TimeEntry
 from App.database import db
 from datetime import date, datetime, timedelta
 
-def login(username, password):
-    """Return the Staff object if username/password are valid."""
+def authenticate(username, password):
     user = Staff.query.filter_by(username=username).first()
     if user and user.check_password(password):
         return user
