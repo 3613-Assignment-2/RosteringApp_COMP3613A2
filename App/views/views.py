@@ -17,6 +17,8 @@ def view_roster_route():
     user = login(username, password)
     if not user:
         return jsonify({'error': 'Invalid username or password'}), 401
+    if user.role != "Staff":
+        return jsonify({'error': 'Only Staff can view the roster'}), 401
 
     roster = view_roster(user)
     return jsonify({'roster': roster}), 200
@@ -32,6 +34,8 @@ def schedule_shift_route():
     end_time = data.get('end_time')
 
     admin = login(admin_username, admin_password)
+    if not admin or admin.role != "Admin":
+        return jsonify({'error': 'Only Admins can schedule shifts'}), 401
     staff = Staff.query.filter_by(username=staff_username).first()
     if not admin or not staff:
         return jsonify({'error': 'Admin login failed or staff not found'}), 401
@@ -57,6 +61,8 @@ def time_in_route():
     user = login(username, password)
     if not user:
         return jsonify({'error': 'Invalid username or password'}), 401
+    if user.role != "Staff":
+        return jsonify({'error': 'Only Staff can time in'}), 401
 
     entry = time_in(user, shift_id)
     if entry:
@@ -73,6 +79,8 @@ def time_out_route():
     user = login(username, password)
     if not user:
         return jsonify({'error': 'Invalid username or password'}), 401
+    if user.role != "Staff":
+        return jsonify({'error': 'Only Staff can time out'}), 401
 
     entry = time_out(user, shift_id)
     if entry:
@@ -103,3 +111,26 @@ def change_password_route():
     if success:
         return jsonify({'message': 'Password updated successfully'}), 200
     return jsonify({'error': 'Password update failed'}), 400
+
+@views.route('/add_staff', methods=['POST'])
+def add_staff_route():
+    data = request.json
+    admin_username = data.get('admin_username')
+    admin_password = data.get('admin_password')
+    new_username = data.get('new_username')
+    new_password = data.get('new_password')
+
+    admin = login(admin_username, admin_password)
+    if not admin or admin.role != 'Admin':
+        return jsonify({'error': 'Only Admins can add staff'}), 401
+
+    if Staff.query.filter_by(username=new_username).first():
+        return jsonify({'error': 'User already exists'}), 400
+
+    staff = Staff(username=new_username, password=new_password, role='Staff')
+    from App.database import db
+    db.session.add(staff)
+    db.session.commit()
+    return jsonify({'message': f'User {new_username} added successfully'}), 200
+
+
