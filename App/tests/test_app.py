@@ -56,36 +56,36 @@ class ShiftUnitTests(unittest.TestCase):
         assert shift.start_time == "09:00"
         assert shift.end_time == "17:00"
 
-    # def test_shift_toJSON(self):    #need to resolve issue with shift_id attribute
-    #     shift = Shift(1, "today", "09:00", "17:00")
-    #     shift.set_shift_id(3)
-    #     print(f"shift id: {shift.shift_id}")
+    def test_shift_toJSON(self):    #need to resolve issue with shift_id attribute
+        shift = Shift(1, "today", "09:00", "17:00")
+        shift.set_shift_id(3)
+        print(f"shift id: {shift.shift_id}")
 
-    #     shift_json = shift.get_json()
-    #     self.assertDictEqual(shift_json, {
-    #         'shiftId': self.shift_id,
-    #         'staffId': self.staff_id,
-    #         'date': self.date,
-    #         'startTime': self.start_time,
-    #         'endTime': self.end_time
-    #         } )
+        shift_json = shift.get_json()
+        self.assertDictEqual(shift_json, {
+            'shiftId': shift.shift_id,
+            'staffId': shift.staff_id,
+            'date': shift.date,
+            'startTime': shift.start_time,
+            'endTime': shift.end_time
+            } )
 
 class TimeEntryUnitTests(unittest.TestCase):
     def test_timeentry_creation(self):
         timeentry = TimeEntry(1, "08:00")
         assert timeentry.time_in == "08:00"
 
-    # def test_timeentry_toJSON(self):   #need to resolve issue with timeentry_id attribute
-    #     timeentry = TimeEntry(1, "08:00", "19:00")
-    #     timeentry.set_id(100)
-    #     print(f"timeentry id: {timeentry.shift_id}")
-    #     timeentry_json = timeentry.get_json()
-    #     self.assertDictEqual(timeentry_json, {
-    #         'id': self.id,
-    #         'shiftId': self.shift_id,
-    #         'timeIn': self.time_in,
-    #         'timeOut': self.time_out
-    #         })
+    def test_timeentry_toJSON(self):   #need to resolve issue with timeentry_id attribute
+        timeentry = TimeEntry(1, "08:00", "19:00")
+        timeentry.set_id(100)
+        print(f"timeentry id: {timeentry.shift_id}")
+        timeentry_json = timeentry.get_json()
+        self.assertDictEqual(timeentry_json, {
+            'id': timeentry.id,
+            'shiftId': timeentry.shift_id,
+            'timeIn': timeentry.time_in,
+            'timeOut': timeentry.time_out
+            })
 
 
 class UserUnitTests(unittest.TestCase): #passed
