@@ -12,6 +12,20 @@ class Shift(db.Model):
     staff = db.relationship("Staff", backref=db.backref("shifts", lazy=True))
     time_entries = db.relationship("TimeEntry", backref="shift", lazy=True)
 
+    def __init__(self, staff_id, date, start_time, end_time): #added optional arg for unit testing
+        self.staff_id = staff_id
+        self.date = date
+        self.start_time = start_time
+        self.end_time = end_time
+        
+        # if shift_id is not None:
+        #     self.shift_id = shift_id
+        # else:
+        #     pass
+
+    def set_shift_id(self, shift_id): #workaround for unit testing
+        self.shift_id = shift_id
+
     def get_json(self):
         return {
             'shiftId': self.shift_id,
@@ -21,8 +35,4 @@ class Shift(db.Model):
             'endTime': self.end_time
         }       
     
-    def __init__(self, staff_id, date, start_time, end_time):
-        self.staff_id = staff_id
-        self.date = date
-        self.start_time = start_time
-        self.end_time = end_time
+    
