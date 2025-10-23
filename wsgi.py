@@ -155,20 +155,24 @@ Testing Commands
 
 test_cli = AppGroup('test', help="test commands for all objects")
 
-@test_cli.cli.command("staff", help="Run Staff tests")
-def user_tests_command():
-        sys.exit(pytest.main(["-k", "User"]))
+@test_cli.command("all", help="Run all unit tests")
+def all_tests_command():
+    sys.exit(pytest.main(["App/tests/test_app.py"]))
 
-@test_cli.cli.command("shift", help="Run Shift tests")
-def user_tests_command():
-        sys.exit(pytest.main(["-k", "User"]))
-    
-@test_cli.cli.command("timeentry", help="Run TimeEntry tests")
-def user_tests_command():
-        sys.exit(pytest.main(["-k", "User"]))
+@test_cli.command("staff", help="Run Staff model tests")
+def staff_tests_command():
+    sys.exit(pytest.main(["-k", "StaffUnitTests"]))
 
-@test_cli.cli.command("user", help="Run User tests")
+@test_cli.command("shift", help="Run Shift model tests")
+def shift_tests_command():
+    sys.exit(pytest.main(["-k", "ShiftUnitTests"]))
+
+@test_cli.command("timeentry", help="Run TimeEntry model tests")
+def timeentry_tests_command():
+    sys.exit(pytest.main(["-k", "TimeEntryUnitTests"]))
+
+@test_cli.command("user", help="Run User model tests")
 def user_tests_command():
-        sys.exit(pytest.main(["-k", "User"]))
+    sys.exit(pytest.main(["-k", "UserUnitTests"]))
 
 app.cli.add_command(test_cli) # adds group to cli
