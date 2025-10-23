@@ -15,6 +15,17 @@ from App.controllers import (
     get_user_by_username,
     update_user
 )
+from App.controllers.controllers import (
+    time_in,
+    time_out,
+    change_password,
+    authenticate,
+    schedule_shift,
+    view_roster,
+    view_shift_report,
+    add_staff
+)
+
 
 
 LOGGER = logging.getLogger(__name__)
@@ -100,37 +111,90 @@ class UserUnitTests(unittest.TestCase): #passed
         self.assertDictEqual(user_json, {"id":None, "username":"bob"})
     
  
-'''
-    Integration Tests
-'''
-'''
-# This fixture creates an empty database for the test and deletes it after the test
-# scope="class" would execute the fixture once and resued for all methods in the class
-@pytest.fixture(autouse=True, scope="module")
-def empty_db():
+
+@pytest.fixture(scope="module")
+def client():
     app = create_app({'TESTING': True, 'SQLALCHEMY_DATABASE_URI': 'sqlite:///test.db'})
-    create_db()
+    with app.app_context():
+        db.drop_all()
+        db.create_all()
     yield app.test_client()
-    db.drop_all()
+    with app.app_context():
+        db.session.remove()
+        db.drop_all()
 
-def test_authenticate():
-    user = create_user("bob", "bobpass")
-    assert login("bob", "bobpass") != None
+class IntegrationTests(unittest.TestCase):
+    
+    def setUp(self):
+        self.app = create_app({'TESTING': True, 'SQLALCHEMY_DATABASE_URI': 'sqlite:///test.db'})
+        self.app_context = self.app.app_context()
+        self.app_context.push()
+        db.drop_all()
+        db.create_all()
 
-class UsersIntegrationTests(unittest.TestCase):
+        self.admin = Staff(username="admin1", password="adminpass", role="Admin")
+        self.staff = Staff(username="staff1", password="staffpass", role="Staff")
+        db.session.add_all([self.admin, self.staff])
+        db.session.commit()
+        db.session.refresh(self.staff) 
 
-    def test_create_user(self):
-        user = create_user("rick", "bobpass")
-        assert user.username == "rick"
 
-    def test_get_all_users_json(self):
-        users_json = get_all_users_json()
-        self.assertListEqual([{"id":1, "username":"bob"}, {"id":2, "username":"rick"}], users_json)
+    def tearDown(self):
+        db.session.remove()
+        db.drop_all()
+        self.app_context.pop()
 
-    # Tests data changes in the database
-    def test_update_user(self):
-        update_user(1, "ronnie")
-        user = get_user(1)
-        assert user.username == "ronnie"
-        
-'''
+    def test_login(self):
+        token = authenticate("staff1", "staffpass")
+        assert token is not None
+
+        bad_token = authenticate("staff1", "wrongpass")
+        assert bad_token is None
+
+    def test_view_roster(self):
+        schedule_shift(self.admin, self.staff, "23-10-2025", "09:00", "17:00")
+        staff_roster = view_roster(self.staff)
+        assert isinstance(staff_roster, list)
+        assert len(staff_roster) > 0
+
+        admin_roster = view_roster(self.admin)
+        assert admin_roster is None or admin_roster == []
+
+    def test_schedule_shift(self):
+        shift = schedule_shift(self.admin, self.staff, "23-10-2025", "09:00", "17:00")
+        assert shift.staff_id == self.staff.user_id
+
+    def test_time_in(self):
+        shift = schedule_shift(self.admin, self.staff, "23-10-2025", "09:00", "17:00")
+        entry = time_in(self.staff, shift.shift_id)
+        assert entry.time_in is not None
+
+    def test_time_out(self):
+        shift = schedule_shift(self.admin, self.staff, "23-10-2025", "09:00", "17:00")
+        time_in(self.staff, shift.shift_id)
+        entry = time_out(self.staff, shift.shift_id)
+        assert entry.time_out is not None
+
+    def test_view_report(self):
+        shift = schedule_shift(self.admin, self.staff, "23-10-2025", "09:00", "17:00")
+        time_in(self.staff, shift.shift_id)
+        time_out(self.staff, shift.shift_id)
+        report = view_shift_report(self.admin)
+        assert isinstance(report, list)
+        assert len(report) > 0
+
+    def test_change_password(self):
+        change_password("staff1", "staffpass", "newpass")
+        updated = authenticate("staff1", "newpass")
+        assert updated is not None
+
+        failed = authenticate("staff1", "staffpass")
+        assert failed is None
+
+    def test_add_staff(self):
+        new_staff = add_staff(self.admin, "newstaff", "newpass")
+        assert new_staff.username == "newstaff"
+
+    def test_restricted(self):
+        unauthorized = view_roster(None)
+        assert unauthorized is None or unauthorized == []
