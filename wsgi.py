@@ -153,6 +153,7 @@ def init():
 Testing Commands
 '''
 
+"""Unit Tests"""
 test_cli = AppGroup('test', help="test commands for all objects")
 
 @test_cli.command("all", help="Run all unit tests")
@@ -175,8 +176,14 @@ def timeentry_tests_command():
 def user_tests_command():
     sys.exit(pytest.main(["-k", "UserUnitTests"]))
 
+@test_cli.command("controller", help="Run controller logic tests")
+def controller_tests_command():
+    sys.exit(pytest.main(["-k", "ControllerUnitTests"]))# this new
 
-@test_cli.command("integration-auth", help="Test login and authentication")
+"""Integration Tests"""
+
+
+@test_cli.command("integration-login", help="Test login and authentication")
 def integration_auth_command():
     sys.exit(pytest.main(["-k", "test_login"]))
 
