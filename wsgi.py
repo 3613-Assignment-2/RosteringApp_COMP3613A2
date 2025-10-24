@@ -153,22 +153,73 @@ def init():
 Testing Commands
 '''
 
+"""Unit Tests"""
 test_cli = AppGroup('test', help="test commands for all objects")
 
-@test_cli.cli.command("staff", help="Run Staff tests")
-def user_tests_command():
-        sys.exit(pytest.main(["-k", "User"]))
+@test_cli.command("all", help="Run all unit tests")
+def all_tests_command():
+    sys.exit(pytest.main(["App/tests/test_app.py"]))
 
-@test_cli.cli.command("shift", help="Run Shift tests")
-def user_tests_command():
-        sys.exit(pytest.main(["-k", "User"]))
-    
-@test_cli.cli.command("timeentry", help="Run TimeEntry tests")
-def user_tests_command():
-        sys.exit(pytest.main(["-k", "User"]))
+@test_cli.command("staff", help="Run Staff model tests")
+def staff_tests_command():
+    sys.exit(pytest.main(["-k", "StaffUnitTests"]))
 
-@test_cli.cli.command("user", help="Run User tests")
+@test_cli.command("shift", help="Run Shift model tests")
+def shift_tests_command():
+    sys.exit(pytest.main(["-k", "ShiftUnitTests"]))
+
+@test_cli.command("timeentry", help="Run TimeEntry model tests")
+def timeentry_tests_command():
+    sys.exit(pytest.main(["-k", "TimeEntryUnitTests"]))
+
+@test_cli.command("user", help="Run User model tests")
 def user_tests_command():
-        sys.exit(pytest.main(["-k", "User"]))
+    sys.exit(pytest.main(["-k", "UserUnitTests"]))
+
+@test_cli.command("controller", help="Run controller logic tests")
+def controller_tests_command():
+    sys.exit(pytest.main(["-k", "ControllerUnitTests"]))# this new
+
+"""Integration Tests"""
+
+
+@test_cli.command("integration-login", help="Test login and authentication")
+def integration_auth_command():
+    sys.exit(pytest.main(["-k", "test_login"]))
+
+@test_cli.command("integration-roster", help="Test viewing roster")
+def integration_roster_command():
+    sys.exit(pytest.main(["-k", "test_view_roster"]))  
+
+@test_cli.command("integration-schedule", help="Test scheduling shifts")
+def integration_schedule_command():
+    sys.exit(pytest.main(["-k", "test_schedule_shift"]))
+
+@test_cli.command("integration-timein", help="Test time in")
+def integration_timein_command():
+    sys.exit(pytest.main(["-k", "test_time_in"])) 
+
+@test_cli.command("integration-timeout", help="Test time out")
+def integration_timeout_command():
+    sys.exit(pytest.main(["-k", "test_time_out"])) 
+
+@test_cli.command("integration-report", help="Test viewing reports")
+def integration_report_command():
+    sys.exit(pytest.main(["-k", "test_view_report"]))  
+
+@test_cli.command("integration-password", help="Test changing password")
+def integration_password_command():
+    sys.exit(pytest.main(["-k", "test_change_password"])) 
+
+@test_cli.command("integration-addstaff", help="Test adding staff")
+def integration_addstaff_command():
+    sys.exit(pytest.main(["-k", "test_add_staff"])) 
+
+
+@test_cli.command("integration-restricted", help="Test restricted route access")
+def integration_restricted_command():
+    sys.exit(pytest.main(["-k", "test_restricted"]))
+
+
 
 app.cli.add_command(test_cli) # adds group to cli

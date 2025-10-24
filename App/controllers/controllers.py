@@ -34,7 +34,7 @@ def schedule_shift(admin, staff, date_str, start_str, end_str):
     return shift
 
 def view_roster(user):
-    if user.role != "Staff":
+    if not user or user.role != "Staff":
         print("Only Staff can view the roster.")
         return
     
@@ -123,3 +123,18 @@ def change_password(username, old_password, new_password):
     db.session.commit()
     print(f"Password for {username} updated successfully.")
     return True
+
+def add_staff(admin, new_username, new_password):
+    if admin.role != "Admin":
+        print("Only Admins can add staff.")
+        return None
+    
+    if Staff.query.filter_by(username=new_username).first():
+        print("User already exists.")
+        return None
+    
+    staff = Staff(username=new_username, password=new_password, role="Staff")
+    db.session.add(staff)
+    db.session.commit()
+    print(f"User {new_username} added successfully.")
+    return staff

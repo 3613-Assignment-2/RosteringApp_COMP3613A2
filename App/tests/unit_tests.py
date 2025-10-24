@@ -15,6 +15,17 @@ from App.controllers import (
     get_user_by_username,
     update_user
 )
+from App.controllers.controllers import (
+    time_in,
+    time_out,
+    change_password,
+    authenticate,
+    schedule_shift,
+    view_roster,
+    view_shift_report,
+    add_staff
+)
+
 
 
 LOGGER = logging.getLogger(__name__)
@@ -25,7 +36,184 @@ LOGGER = logging.getLogger(__name__)
 # @pytest.fixture
 # def db_initialize():
 
+class StaffUnitTests(unittest.TestCase):
+    def test_new_staff(self):
+        staff = Staff("john", "1234", "Staff")
+        assert staff.username == "john"
+        assert staff.role == "Staff"
 
+    def test_set_password(self):
+        staff = Staff("john", "1234", "Staff")
+        staff.set_password("mypassword")
+        assert staff.password != "mypassword"
+
+    def test_check_password_valid(self):
+        staff = Staff("john", "1234", "Staff")
+        staff.set_password("mypassword")
+        assert staff.check_password("mypassword")
+
+    def test_check_password_invalid(self):
+        staff = Staff("john", "1234", "Staff")
+        staff.set_password("mypassword")
+        assert not staff.check_password("wrongpass")
+
+class ShiftUnitTests(unittest.TestCase):
+    def test_shift_creation(self):
+        shift = Shift(1, "today", "09:00", "17:00")
+        assert shift.staff_id == 1
+        assert shift.start_time == "09:00"
+        assert shift.end_time == "17:00"
+
+    def test_shift_toJSON(self):
+        shift = Shift(1, "today", "09:00", "17:00")
+        shift.set_shift_id(3)
+        shift_json = shift.get_json()
+        self.assertDictEqual(shift_json, {
+            'shiftId': 3,
+            'staffId': 1,
+            'date': "today",
+            'startTime': "09:00",
+            'endTime': "17:00"
+        })
+
+class TimeEntryUnitTests(unittest.TestCase):
+    def test_timeentry_creation(self):
+        timeentry = TimeEntry(1, "08:00")
+        assert timeentry.time_in == "08:00"
+
+    def test_timeentry_toJSON(self):
+        timeentry = TimeEntry(1, "08:00", "19:00")
+        timeentry.set_id(100)
+        timeentry_json = timeentry.get_json()
+        self.assertDictEqual(timeentry_json, {
+            'id': 100,
+            'shiftId': 1,
+            'timeIn': "08:00",
+            'timeOut': "19:00"
+        })
+
+class UserUnitTests(unittest.TestCase):
+    def test_user_creation(self):
+        user = User("bob", "bobpass")
+        assert user.username == "bob"
+        assert user.check_password("bobpass")
+
+    def test_user_toJSON(self):
+        user = User("bob", "bobpass")
+        user_json = user.get_json()
+        self.assertDictEqual(user_json, {"id": None, "username": "bob"})
+
+class ControllerUnitTests(unittest.TestCase):
+    def setUp(self):
+        self.app = create_app({'TESTING': True, 'SQLALCHEMY_DATABASE_URI': 'sqlite:///test.db'})
+        self.app_context = self.app.app_context()
+        self.app_context.push()
+        db.drop_all()
+        db.create_all()
+
+        self.admin = Staff(username="admin1", password="adminpass", role="Admin")
+        self.staff = Staff(username="john_doe", password="oldpass123", role="Staff")
+        db.session.add_all([self.admin, self.staff])
+        db.session.commit()
+
+    def tearDown(self):
+        db.session.remove()
+        db.drop_all()
+        self.app_context.pop()
+
+    def test_add_staff_success(self):
+        new_staff = add_staff(self.admin, "newstaff", "staffpass")
+        assert new_staff.username == "newstaff"
+
+    def test_add_staff_existing_user(self):
+        add_staff(self.admin, "john_doe", "staffpass")
+        duplicate = add_staff(self.admin, "john_doe", "anotherpass")
+        assert duplicate is None
+
+    def test_add_staff_invalid_role(self):
+        result = add_staff(self.staff, "tempstaff", "temp123")
+        assert result is None
+
+    def test_change_password_success(self):
+        change_password("john_doe", "oldpass123", "newpass123")
+        assert authenticate("john_doe", "newpass123") is not None
+
+    def test_change_password_failure(self):
+        result = change_password("john_doe", "wrongoldpass123", "newpass123")
+        assert result is False
+
+    def test_login_success(self):
+        token = authenticate("john_doe", "oldpass123")
+        assert token is not None
+
+    def test_login_invalid(self):
+        token = authenticate("ghost", "wrongpass")
+        assert token is None
+
+    def test_shift_creation_success(self):
+        shift = schedule_shift(self.admin, self.staff, "23-10-2025", "09:00", "17:00")
+        assert shift is not None
+
+    def test_shift_creation_invalid_role(self):
+        result = schedule_shift(self.staff, self.staff, "23-10-2025", "09:00", "17:00")
+        assert result is None
+
+    def test_view_roster_success(self):
+        schedule_shift(self.admin, self.staff, "23-10-2025", "09:00", "17:00")
+        roster = view_roster(self.staff)
+        assert isinstance(roster, list)
+
+    def test_view_roster_invalid_role(self):
+        result = view_roster(self.admin)
+        assert result is None
+
+    def test_view_report_success(self):
+        shift = schedule_shift(self.admin, self.staff, "23-10-2025", "09:00", "17:00")
+        time_in(self.staff, shift.shift_id)
+        time_out(self.staff, shift.shift_id)
+        report = view_shift_report(self.admin)
+        assert isinstance(report, list)
+
+    def test_view_report_invalid_role(self):
+        result = view_shift_report(self.staff)
+        assert result == []
+
+    def test_timeentry_success(self):
+        shift = schedule_shift(self.admin, self.staff, "23-10-2025", "09:00", "17:00")
+        db.session.refresh(shift)
+        entry = time_in(self.staff, shift.shift_id)
+        assert entry.time_in is not None
+
+    def test_timeentry_invalid_role(self):
+        shift = schedule_shift(self.admin, self.staff, "23-10-2025", "09:00", "17:00")
+        db.session.refresh(shift)
+        result = time_in(self.admin, shift.shift_id)
+        assert result is None
+
+    def test_timeentry_failure(self):
+        result = time_in(self.staff, 999)
+        assert result is None
+
+    def test_time_out_success(self):
+        shift = schedule_shift(self.admin, self.staff, "23-10-2025", "09:00", "17:00")
+        db.session.refresh(shift)
+        time_in(self.staff, shift.shift_id)
+        entry = time_out(self.staff, shift.shift_id)
+        assert entry.time_out is not None
+
+    def test_time_out_invalid_role(self):
+        shift = schedule_shift(self.admin, self.staff, "23-10-2025", "09:00", "17:00")
+        db.session.refresh(shift)
+        time_in(self.staff, shift.shift_id)
+        result = time_out(self.admin, shift.shift_id)
+        assert result is None
+
+    def test_time_out_failure(self):
+        result = time_out(self.staff, 999)
+        assert result is None
+
+
+""""
 class StaffUnitTests(unittest.TestCase): #all passed
 
     def test_new_staff(self):
@@ -99,38 +287,91 @@ class UserUnitTests(unittest.TestCase): #passed
         user_json = user.get_json()
         self.assertDictEqual(user_json, {"id":None, "username":"bob"})
     
- 
-'''
-    Integration Tests
-'''
-'''
-# This fixture creates an empty database for the test and deletes it after the test
-# scope="class" would execute the fixture once and resued for all methods in the class
-@pytest.fixture(autouse=True, scope="module")
-def empty_db():
+"""
+
+@pytest.fixture(scope="module")
+def client():
     app = create_app({'TESTING': True, 'SQLALCHEMY_DATABASE_URI': 'sqlite:///test.db'})
-    create_db()
+    with app.app_context():
+        db.drop_all()
+        db.create_all()
     yield app.test_client()
-    db.drop_all()
+    with app.app_context():
+        db.session.remove()
+        db.drop_all()
 
-def test_authenticate():
-    user = create_user("bob", "bobpass")
-    assert login("bob", "bobpass") != None
+class IntegrationTests(unittest.TestCase):
+    
+    def setUp(self):
+        self.app = create_app({'TESTING': True, 'SQLALCHEMY_DATABASE_URI': 'sqlite:///test.db'})
+        self.app_context = self.app.app_context()
+        self.app_context.push()
+        db.drop_all()
+        db.create_all()
 
-class UsersIntegrationTests(unittest.TestCase):
+        self.admin = Staff(username="admin1", password="adminpass", role="Admin")
+        self.staff = Staff(username="staff1", password="staffpass", role="Staff")
+        db.session.add_all([self.admin, self.staff])
+        db.session.commit()
+        db.session.refresh(self.staff) 
 
-    def test_create_user(self):
-        user = create_user("rick", "bobpass")
-        assert user.username == "rick"
 
-    def test_get_all_users_json(self):
-        users_json = get_all_users_json()
-        self.assertListEqual([{"id":1, "username":"bob"}, {"id":2, "username":"rick"}], users_json)
+    def tearDown(self):
+        db.session.remove()
+        db.drop_all()
+        self.app_context.pop()
 
-    # Tests data changes in the database
-    def test_update_user(self):
-        update_user(1, "ronnie")
-        user = get_user(1)
-        assert user.username == "ronnie"
-        
-'''
+    def test_login(self):
+        token = authenticate("staff1", "staffpass")
+        assert token is not None
+
+        bad_token = authenticate("staff1", "wrongpass")
+        assert bad_token is None
+
+    def test_view_roster(self):
+        schedule_shift(self.admin, self.staff, "23-10-2025", "09:00", "17:00")
+        staff_roster = view_roster(self.staff)
+        assert isinstance(staff_roster, list)
+        assert len(staff_roster) > 0
+
+        admin_roster = view_roster(self.admin)
+        assert admin_roster is None or admin_roster == []
+
+    def test_schedule_shift(self):
+        shift = schedule_shift(self.admin, self.staff, "23-10-2025", "09:00", "17:00")
+        assert shift.staff_id == self.staff.user_id
+
+    def test_time_in(self):
+        shift = schedule_shift(self.admin, self.staff, "23-10-2025", "09:00", "17:00")
+        entry = time_in(self.staff, shift.shift_id)
+        assert entry.time_in is not None
+
+    def test_time_out(self):
+        shift = schedule_shift(self.admin, self.staff, "23-10-2025", "09:00", "17:00")
+        time_in(self.staff, shift.shift_id)
+        entry = time_out(self.staff, shift.shift_id)
+        assert entry.time_out is not None
+
+    def test_view_report(self):
+        shift = schedule_shift(self.admin, self.staff, "23-10-2025", "09:00", "17:00")
+        time_in(self.staff, shift.shift_id)
+        time_out(self.staff, shift.shift_id)
+        report = view_shift_report(self.admin)
+        assert isinstance(report, list)
+        assert len(report) > 0
+
+    def test_change_password(self):
+        change_password("staff1", "staffpass", "newpass")
+        updated = authenticate("staff1", "newpass")
+        assert updated is not None
+
+        failed = authenticate("staff1", "staffpass")
+        assert failed is None
+
+    def test_add_staff(self):
+        new_staff = add_staff(self.admin, "newstaff", "newpass")
+        assert new_staff.username == "newstaff"
+
+    def test_restricted(self):
+        unauthorized = view_roster(None)
+        assert unauthorized is None or unauthorized == []
