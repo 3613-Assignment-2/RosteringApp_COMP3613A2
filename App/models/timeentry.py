@@ -24,6 +24,10 @@ class TimeEntry(db.Model):
             'timeOut': self.time_out
         }       
     
+    def set_time_in(self, time_in):
+        self.time_in = time_in
     
+    def set_time_out(self, time_out):
+        self.time_out = time_out
 
 
