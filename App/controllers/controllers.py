@@ -14,24 +14,40 @@ def schedule_shift(admin, staff, date_str, start_str, end_str):
     if admin.role != "Admin":
         print("Only Admins can schedule shifts.")
         return None
-    
-    
+
     date = datetime.strptime(date_str, "%d-%m-%Y").date()
     today = date.today()
-    start_of_week = today - timedelta(days=today.weekday()) 
-    end_of_week = start_of_week + timedelta(days=6)         
+    start_of_week = today - timedelta(days=today.weekday())
+    end_of_week = start_of_week + timedelta(days=6)
 
-    if not (start_of_week <= date <= end_of_week): 
+    if not (start_of_week <= date <= end_of_week):
         print("Shifts can only be scheduled within the current week.")
-        return
+        return None
 
     start_time = datetime.strptime(start_str, "%H:%M").time()
     end_time = datetime.strptime(end_str, "%H:%M").time()
-    
-    shift = Shift(staff_id=staff.user_id, date=date, start_time=start_time, end_time=end_time)
+
+    existing_shift = Shift.query.filter_by(
+        staff_id=staff.user_id,
+        date=date,
+        start_time=start_time,
+        end_time=end_time
+    ).first()
+
+    if existing_shift:
+        print("Shift already exists for this staff member at the same time.")
+        return None
+
+    shift = Shift(
+        staff_id=staff.user_id,
+        date=date,
+        start_time=start_time,
+        end_time=end_time
+    )
     db.session.add(shift)
     db.session.commit()
     return shift
+
 
 def view_roster(user):
     if not user or user.role != "Staff":
