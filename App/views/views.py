@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from datetime import datetime
 from App.models.staff import Staff
 from App.models.shift import Shift
 from App.models.timeentry import TimeEntry
@@ -56,6 +57,10 @@ def schedule_shift_route():
     if not admin or not staff:
         return jsonify({'error': 'Admin login failed or staff not found'}), 401
 
+    
+    if Shift.query.filter_by(staff_id=staff.user_id, date=datetime.strptime(date, "%d-%m-%Y").date(), start_time=start_time, end_time=end_time).first():
+        return jsonify({'error': 'Shift already exists'}), 400
+    
     shift = schedule_shift(admin, staff, date, start_time, end_time)
     if shift:
         return jsonify({
@@ -78,10 +83,29 @@ def time_in_route():
     if user.role != "Staff":
         return jsonify({'error': 'Only Staff can time in'}), 401
     
-    shift_id = request.json.get('shift_id')
-    entry = time_in(user, shift_id)
+    now = datetime.now()
+    current_date = now.date()
+    current_time = now.time()
+
+    shifts_today = Shift.query.filter_by(staff_id=user.user_id, date=current_date).all()
+
+    if not shifts_today:
+        return jsonify({'error': 'No shift scheduled for today'}), 404
+
+    active_shifts = [s for s in shifts_today if s.start_time <= current_time <= s.end_time]
+
+    if len(active_shifts) == 0:
+        return jsonify({'error': 'No active shift found for the current time'}), 404
+
+    shift = active_shifts[0]
+
+    entry = time_in(user, shift.shift_id)
     if entry:
-        return jsonify({'time_in': entry.time_in.isoformat()}), 200
+        return jsonify({
+            'message': 'Clocked in successfully',
+            'shift_id': shift.shift_id,
+            'time_in': entry.time_in.isoformat()
+        }), 200
     return jsonify({'error': 'Time in failed'}), 400
 
 @views.route('/time_out', methods=['POST'])
@@ -96,10 +120,29 @@ def time_out_route():
     if user.role != "Staff":
         return jsonify({'error': 'Only Staff can time out'}), 401
 
-    shift_id = request.json.get('shift_id')
-    entry = time_out(user, shift_id)
+    now = datetime.now()
+    current_date = now.date()
+    current_time = now.time()
+
+    shifts_today = Shift.query.filter_by(staff_id=user.user_id, date=current_date).all()
+
+    if not shifts_today:
+        return jsonify({'error': 'No shift scheduled for today'}), 404
+
+    active_shifts = [s for s in shifts_today if s.start_time <= current_time <= s.end_time]
+
+    if len(active_shifts) == 0:
+        return jsonify({'error': 'No active shift found for the current time'}), 404
+
+    shift = active_shifts[0]
+
+    entry = time_out(user, shift.shift_id)
     if entry:
-        return jsonify({'time_out': entry.time_out.isoformat()}), 200
+        return jsonify({
+            'message': 'Clocked out successfully',
+            'shift_id': shift.shift_id,
+            'time_out': entry.time_out.isoformat()
+        }), 200
     return jsonify({'error': 'Time out failed'}), 400
 
 @views.route('/view_report', methods=['POST'])
@@ -121,6 +164,10 @@ def change_password_route():
     username = data.get('username')
     old_password = data.get('old_password')
     new_password = data.get('new_password')
+
+    user = Staff.query.filter_by(username=username).first()
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
 
     success = change_password(username, old_password, new_password)
     if success:
