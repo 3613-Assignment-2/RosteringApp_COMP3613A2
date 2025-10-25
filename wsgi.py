@@ -109,6 +109,21 @@ def view_report_command(admin_username, admin_password):
         e = r['time_entry']
         print(f"Time In: {e['in']}, Time Out: {e['out']}")
 
+@rostering_cli.command("add_admin") #need this command to be able to test api properly
+@click.argument("new_username")
+@click.argument("new_password")
+def add_admin_command(new_username, new_password):
+
+    if Staff.query.filter_by(username=new_username).first():
+        print("User already exists.")
+        return
+
+    admin = Staff(username=new_username, password=new_password, role="Admin")
+    db.session.add(admin)
+    db.session.commit()
+    print(f"Admin {new_username} added successfully.")
+
+
 @rostering_cli.command("add_staff")
 @click.argument("admin_username")
 @click.argument("admin_password")

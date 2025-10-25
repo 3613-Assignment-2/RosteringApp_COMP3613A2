@@ -14,6 +14,7 @@ views = Blueprint('views', __name__)
 @views.route('/login', methods=['POST'])
 def login_route():
     data = request.get_json()
+    print(data)
     username = data.get('username')
     password = data.get('password')
 
@@ -58,7 +59,7 @@ def schedule_shift_route():
     shift = schedule_shift(admin, staff, date, start_time, end_time)
     if shift:
         return jsonify({
-            'message': 'Shift scheduled',
+            'message': 'Shift scheduled',   
             'staff': staff.username,
             'date': shift.date.isoformat(),
             'start': shift.start_time.isoformat(),
