@@ -1,0 +1,795 @@
+{
+	"info": {
+		"_postman_id": "253f5663-0556-4b7d-b03c-300cb9243429",
+		"name": "Rostr API",
+		"description": "Before running tests, make sure to:\n\n1. Initialize the database using \"`flask init`\"\n    \n2. Create an admin account (since normal staff will not have access to these functions) using \"`flask rostering add_admin {username} {password}`\" (I use username = \"admin\" and password = \"1234\" for simplicity)\n    \n3. Set the following postman environment variables:\n    \n    1. `baseURL` - application domain\n        \n    2. `adminJwt` - obtained when admin login is successful (should be blank by default)\n        \n    3. `adminUsername`\n        \n    4. `adminPassword`\n        \n    5. `staffJwt` - obtained when staff login is successful (should be blank by default)\n        \n    6. `staffUsername`\n        \n    7. `staffPassword`\n        \n    8. `staffNewPassword` - used for testing the changePassword functionality\n        \n\n**IMPORTANT: Make sure to run adminLogin/adminLoginSuccess before any other tests to obtain admin JWT (the jwt variable is automatically set upon successful admin login). All other admin-specific tests (e.g. addStaff) will not be able to run otherwise.**",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "49532787",
+		"_collection_link": "https://solar-capsule-3236928.postman.co/workspace/0efb8dd0-ec40-4761-81ba-bbcd779ba69c/collection/49532787-253f5663-0556-4b7d-b03c-300cb9243429?action=share&source=collection_link&creator=49532787"
+	},
+	"item": [
+		{
+			"name": "adminLogin",
+			"item": [
+				{
+					"name": "adminLoginSuccess",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code == 200 ) {\r",
+									"    let jsonData;\r",
+									"    jsonData = pm.response.json();\r",
+									"    if (jsonData) {\r",
+									"        let token = jsonData.access_token;\r",
+									"        pm.environment.set('adminJwt', token);\r",
+									"    }\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"{{adminUsername}}\",\r\n    \"password\": \"{{adminPassword}}\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/login",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "adminLoginFail",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"username\",\r\n    \"password\": \"password\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/login",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"login"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "addStaff",
+			"item": [
+				{
+					"name": "addStaffSuccess",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminJwt}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"{{staffUsername}}\",\r\n    \"password\": \"{{staffPassword}}\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/add_staff",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"add_staff"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "addStaffDuplicate",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminJwt}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"john\",\r\n    \"password\": \"johnpass\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/add_staff",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"add_staff"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "addStaffNotAdmin",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{staffJwt}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"john\",\r\n    \"password\": \"johnpass\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/add_staff",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"add_staff"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "staffLogin",
+			"item": [
+				{
+					"name": "staffLoginSuccess",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code == 200 ) {\r",
+									"    let jsonData;\r",
+									"    jsonData = pm.response.json();\r",
+									"    if (jsonData) {\r",
+									"        let token = jsonData.access_token;\r",
+									"        pm.environment.set('staffJwt', token);\r",
+									"    }\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"{{staffUsername}}\",\r\n    \"password\": \"{{staffPassword}}\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/login",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "staffLoginFailure",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code == 200 ) {\r",
+									"    let jsonData;\r",
+									"    jsonData = pm.response.json();\r",
+									"    if (jsonData) {\r",
+									"        let token = jsonData.access_token;\r",
+									"        pm.environment.set('staffJwt', token);\r",
+									"    }\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"username\",\r\n    \"password\": \"password\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/login",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"login"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "scheduleShift",
+			"item": [
+				{
+					"name": "scheduleShiftSuccess",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminJwt}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"staff_username\": \"{{staffUsername}}\",\r\n    \"date\": \"24-10-2025\",\r\n    \"start_time\": \"08:00\",\r\n    \"end_time\": \"22:00\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/schedule",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"schedule"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "scheduleShiftNoStaff",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminJwt}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"staff_username\": \"rick\",\r\n    \"date\": \"15-10-2025\",\r\n    \"start_time\": \"08:00\",\r\n    \"end_time\": \"16:00\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/schedule",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"schedule"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "scheduleShiftAsStaff",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{staffJwt}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"staff_username\": \"{{staffUsername}}\",\r\n    \"date\": \"15-10-2025\",\r\n    \"start_time\": \"08:00\",\r\n    \"end_time\": \"16:00\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/schedule",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"schedule"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "scheduleShiftFail",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminJwt}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"staff_username\": \"{{staffUsername}}\",\r\n    \"date\": \"15-10-2025\",\r\n    \"start_time\": \"08:00\",\r\n    \"end_time\": \"16:00\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/schedule",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"schedule"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "staffTimeIn",
+			"item": [
+				{
+					"name": "timeInSuccess",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{staffJwt}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/time_in",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"time_in"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "timeInNotStaff",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminJwt}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseURL}}/api/time_in",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"time_in"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "staffTimeOut",
+			"item": [
+				{
+					"name": "timeOutSuccess",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{staffJwt}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/time_out",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"time_out"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "timeOutNotStaff",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminJwt}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseURL}}/api/time_out",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"time_out"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "viewRoster",
+			"item": [
+				{
+					"name": "viewRosterSuccess",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{staffJwt}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"staff_username\": \"{{staffUsername}}\",\r\n    \"date\": \"15-10-2025\",\r\n    \"start_time\": \"08:00\",\r\n    \"end_time\": \"16:00\"\r\n}"
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/view_roster",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"view_roster"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "viewRosterNotStaff",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminJwt}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/view_roster",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"view_roster"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "viewReport",
+			"item": [
+				{
+					"name": "viewReportSuccess",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminJwt}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/view_report",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"view_report"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "viewReportNotAdmin",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{staffJwt}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseURL}}/api/view_report",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"view_report"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "changePassword",
+			"item": [
+				{
+					"name": "changePasswordSuccess",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{adminJwt}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"{{staffUsername}}\",\r\n    \"old_password\": \"{{staffNewPassword}}\",\r\n    \"new_password\": \"{{staffPassword}}\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/change_password",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"change_password"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "changePasswordWrongPassword",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{staffJwt}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"{{staffUsername}}\",\r\n    \"old_password\": \"1234\",\r\n    \"new_password\": \"{{staffNewPassword}}\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/change_password",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"change_password"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "changePasswordNonexistingUser",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{staffJwt}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"username\": \"johnny\",\r\n    \"old_password\": \"{{staffPassword}}\",\r\n    \"new_password\": \"{{staffNewPassword}}\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/change_password",
+							"host": [
+								"{{baseURL}}"
+							],
+							"path": [
+								"api",
+								"change_password"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
