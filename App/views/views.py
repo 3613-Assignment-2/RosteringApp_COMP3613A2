@@ -61,7 +61,12 @@ def schedule_shift_route():
     if Shift.query.filter_by(staff_id=staff.user_id, date=datetime.strptime(date, "%d-%m-%Y").date(), start_time=start_time, end_time=end_time).first():
         return jsonify({'error': 'Shift already exists'}), 400
     
-    shift = schedule_shift(admin, staff, date, start_time, end_time)
+    try:
+        shift = schedule_shift(admin, staff, date, start_time, end_time)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    
+
     if shift:
         return jsonify({
             'message': 'Shift scheduled',   

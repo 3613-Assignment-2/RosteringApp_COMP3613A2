@@ -21,8 +21,7 @@ def schedule_shift(admin, staff, date_str, start_str, end_str):
     end_of_week = start_of_week + timedelta(days=6)
 
     if not (start_of_week <= date <= end_of_week):
-        print("Shifts can only be scheduled within the current week.")
-        return None
+        raise ValueError("Shifts can only be scheduled within the current week.")
 
     start_time = datetime.strptime(start_str, "%H:%M").time()
     end_time = datetime.strptime(end_str, "%H:%M").time()
@@ -35,8 +34,7 @@ def schedule_shift(admin, staff, date_str, start_str, end_str):
     ).first()
 
     if existing_shift:
-        print("Shift already exists for this staff member at the same time.")
-        return None
+        raise ValueError("Shift already exists for this staff member at the same time.")
 
     shift = Shift(
         staff_id=staff.user_id,

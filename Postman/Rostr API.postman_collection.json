@@ -2,10 +2,10 @@
 	"info": {
 		"_postman_id": "253f5663-0556-4b7d-b03c-300cb9243429",
 		"name": "Rostr API",
-		"description": "Before running tests, make sure to:\n\n1. Initialize the database using \"`flask init`\"\n    \n2. Create an admin account (since normal staff will not have access to these functions) using \"`flask rostering add_admin {username} {password}`\" (I use username = \"admin\" and password = \"1234\" for simplicity)\n    \n3. Set the following postman environment variables:\n    \n    1. `baseURL` - application domain\n        \n    2. `adminJwt` - obtained when admin login is successful (should be blank by default)\n        \n    3. `adminUsername`\n        \n    4. `adminPassword`\n        \n    5. `staffJwt` - obtained when staff login is successful (should be blank by default)\n        \n    6. `staffUsername`\n        \n    7. `staffPassword`\n        \n    8. `staffNewPassword` - used for testing the changePassword functionality\n        \n\n**IMPORTANT: Make sure to run adminLogin/adminLoginSuccess before any other tests to obtain admin JWT (the jwt variable is automatically set upon successful admin login). All other admin-specific tests (e.g. addStaff) will not be able to run otherwise.**",
+		"description": "Before running tests, make sure to:\n\n1. Initialize the database using \"`flask init`\"\n    \n2. Create an admin account (since normal staff will not have access to these functions) using \"`flask rostering add_admin {username} {password}`\" (I use username = \"admin\" and password = \"1234\" for simplicity)\n    \n3. Set the following postman environment variables:\n    \n    1. `baseURL` - application domain\n        \n    2. `adminJwt` - obtained when admin login is successful (should be blank by default)\n        \n    3. `adminUsername`\n        \n    4. `adminPassword`\n        \n    5. `staffJwt` - obtained when staff login is successful (should be blank by default)\n        \n    6. `staffUsername`\n        \n    7. `staffPassword`\n        \n    8. `staffNewPassword` - used for testing the changePassword functionality\n        \n4. Adjust dates in the scheduleShift folder to match the current week (shifts scheduled outside of the current week will return a 400 error). **Note: scheduleShiftOutOfBounds requires the date specified to not match the current week.**\n    \n\n**IMPORTANT: Make sure to run adminLogin/adminLoginSuccess before any other tests to obtain admin JWT (the jwt variable is automatically set upon successful admin login). All other admin-specific tests (e.g. addStaff) will not be able to run otherwise.**",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "49532787",
-		"_collection_link": "https://solar-capsule-3236928.postman.co/workspace/0efb8dd0-ec40-4761-81ba-bbcd779ba69c/collection/49532787-253f5663-0556-4b7d-b03c-300cb9243429?action=share&source=collection_link&creator=49532787"
+		"_collection_link": "https://solar-capsule-3236928.postman.co/workspace/Cid-Wilson-Bellamy-'s-Workspace~0efb8dd0-ec40-4761-81ba-bbcd779ba69c/collection/49532787-253f5663-0556-4b7d-b03c-300cb9243429?action=share&source=collection_link&creator=49532787"
 	},
 	"item": [
 		{
@@ -306,7 +306,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"staff_username\": \"{{staffUsername}}\",\r\n    \"date\": \"24-10-2025\",\r\n    \"start_time\": \"08:00\",\r\n    \"end_time\": \"22:00\"\r\n}",
+							"raw": "{\r\n    \"staff_username\": \"{{staffUsername}}\",\r\n    \"date\": \"24-10-2025\",\r\n    \"start_time\": \"08:00\",\r\n    \"end_time\": \"23:00\"\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
